@@ -1,0 +1,29 @@
+# ---- Python / backend ----
+backend/.venv/
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Generated audio + uploaded references (runtime data)
+backend/data/
+
+# ---- Node / frontend ----
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+*.tsbuildinfo
+
+# ---- Env / secrets ----
+.env
+.env.*
+!.env.example
+
+# ---- Editor / OS ----
+.vscode/
+.idea/
+**/.DS_Store
+*.log
