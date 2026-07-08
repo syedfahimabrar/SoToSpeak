@@ -46,10 +46,13 @@ both on Ctrl-C. The sections below cover manual setup and configuration.
 Runs the whole stack (backend + nginx-served frontend) and keeps it up.
 
 ```bash
-cp .env.example .env          # optional: set device / model revision
 docker compose up -d --build  # build and run in the background
 docker compose logs -f        # follow logs (first run downloads model weights)
 ```
+
+Configuration lives directly in the `environment:` block of `docker-compose.yml`
+(device, model, revision) — edit those values. They're literals rather than
+`${VAR:-default}` so the file works on older Compose versions too.
 
 Open **http://localhost:8080** — the frontend serves the UI and reverse-proxies
 `/api` (including the SSE progress stream) to the backend, so it's same-origin
@@ -61,7 +64,7 @@ with no CORS setup. Model weights and generated audio persist in named volumes
 the backend runs on CPU (fine for a few samples, slow for big grids). On a Linux
 host with an NVIDIA GPU and the [container toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html):
 
-1. set `SOTOSPEAK_DEVICE=cuda` in `.env`, and
+1. set `SOTOSPEAK_DEVICE` to `cuda` in `docker-compose.yml`, and
 2. uncomment the `gpus: all` (or `deploy:`) block under `backend` in `docker-compose.yml`.
 
 The image's Torch wheel already includes CUDA, so no separate build is needed.
