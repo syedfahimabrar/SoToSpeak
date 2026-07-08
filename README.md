@@ -50,9 +50,12 @@ docker compose up -d --build  # build and run in the background
 docker compose logs -f        # follow logs (first run downloads model weights)
 ```
 
+Prefer the modern `docker compose` (with a space, v2). The file also works with
+legacy `docker-compose` (v1) — it carries a `version:` key and literal env values
+for that reason.
+
 Configuration lives directly in the `environment:` block of `docker-compose.yml`
-(device, model, revision) — edit those values. They're literals rather than
-`${VAR:-default}` so the file works on older Compose versions too.
+(device, model, revision) — edit those values.
 
 Open **http://localhost:8080** — the frontend serves the UI and reverse-proxies
 `/api` (including the SSE progress stream) to the backend, so it's same-origin

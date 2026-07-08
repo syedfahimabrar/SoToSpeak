@@ -5,8 +5,12 @@
 #
 # Open http://localhost:8080  (frontend serves the UI and proxies /api to the backend).
 #
-# Defaults run on CPU. For the NVIDIA GPU server: set SOTOSPEAK_DEVICE=cuda in
-# .env and uncomment the `gpus:`/`deploy:` block under the backend service.
+# Defaults run on CPU. For the NVIDIA GPU server: set SOTOSPEAK_DEVICE to cuda
+# below and enable a GPU block under the backend service (see notes there).
+#
+# `version` is required by legacy docker-compose (v1); newer `docker compose`
+# (v2) ignores it with a harmless warning.
+version: "3.8"
 
 services:
   backend:
@@ -25,16 +29,18 @@ services:
       - "8000:8000"          # optional: direct API access (frontend also proxies it)
     restart: unless-stopped
 
-    # --- NVIDIA GPU: uncomment on a CUDA host (needs nvidia-container-toolkit) ---
-    # gpus: all
-    # Portable alternative to `gpus: all`:
-    # deploy:
-    #   resources:
-    #     reservations:
-    #       devices:
-    #         - driver: nvidia
-    #           count: 1
-    #           capabilities: [gpu]
+    # --- NVIDIA GPU (needs nvidia-container-toolkit on the host) ---
+    # Also change SOTOSPEAK_DEVICE above to "cuda".
+    #
+    # With modern `docker compose` (v2):
+    #   gpus: all
+    #
+    # With legacy `docker-compose` (v1), use the nvidia runtime instead
+    # (register it in /etc/docker/daemon.json, then):
+    #   runtime: nvidia
+    #   environment:
+    #     SOTOSPEAK_DEVICE: "cuda"
+    #     NVIDIA_VISIBLE_DEVICES: "all"
 
   frontend:
     build: ./frontend
