@@ -45,7 +45,7 @@ def get_model() -> Any:
                 if config.OMNIVOICE_REVISION:
                     kwargs["revision"] = config.OMNIVOICE_REVISION
                 model = OmniVoice.from_pretrained(config.OMNIVOICE_MODEL, **kwargs)
-                model = model.to(config.effective_device()).eval()
+                model = model.to(config.DEVICE).eval()
                 _model = model
     return _model
 

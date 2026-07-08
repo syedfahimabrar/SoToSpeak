@@ -27,7 +27,7 @@ def get_predictor() -> Any:
                 model = torch.hub.load(
                     "tarepan/SpeechMOS", "utmos22_strong", trust_repo=True
                 )
-                _predictor = model.to(config.effective_device()).eval()
+                _predictor = model.to(config.DEVICE).eval()
     return _predictor
 
 
@@ -40,7 +40,7 @@ def score(audio: np.ndarray, sample_rate: int = config.SAMPLE_RATE) -> float:
     wav = torch.as_tensor(np.asarray(audio, dtype=np.float32))
     if wav.ndim == 1:
         wav = wav.unsqueeze(0)
-    wav = wav.to(config.effective_device())
+    wav = wav.to(config.DEVICE)
 
     if sample_rate != config.UTMOS_SAMPLE_RATE:
         wav = AF.resample(wav, sample_rate, config.UTMOS_SAMPLE_RATE)

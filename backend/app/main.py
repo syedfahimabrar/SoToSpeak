@@ -23,12 +23,7 @@ app.include_router(audio.router)
 
 @app.get("/api/health")
 async def health() -> dict[str, str]:
-    return {
-        "status": "ok",
-        "device_requested": config.DEVICE,
-        "device": config.effective_device(),
-        "model": config.OMNIVOICE_MODEL,
-    }
+    return {"status": "ok", "device": config.DEVICE, "model": config.OMNIVOICE_MODEL}
 
 
 @app.get("/api/vocab")

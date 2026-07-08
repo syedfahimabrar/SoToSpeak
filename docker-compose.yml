@@ -1,39 +1,35 @@
-# So-to-Speak 2.0 — full stack.
+# So-to-Speak 2.0 — full stack (NVIDIA GPU required).
 #   docker compose up -d --build      # build + run in the background
 #   docker compose logs -f            # follow logs
 #   docker compose down               # stop (volumes/model cache are kept)
 #
 # Open http://localhost:8080  (frontend serves the UI and proxies /api to the backend).
 #
-# Defaults run on CPU. For the NVIDIA GPU server: set SOTOSPEAK_DEVICE=cuda (e.g.
-# in a .env file next to this one) and uncomment the `gpus: all` line below.
+# Requires an NVIDIA GPU on the host with the NVIDIA Container Toolkit installed.
+# The backend image ships a CUDA 11.8 Torch, which runs on any driver >= 450.
 
 services:
   backend:
     build: ./backend
     environment:
-      # cuda | mps | cpu  (mps is not available inside Linux containers)
-      SOTOSPEAK_DEVICE: ${SOTOSPEAK_DEVICE:-cpu}
-      SOTOSPEAK_MODEL: ${SOTOSPEAK_MODEL:-k2-fsa/OmniVoice}
+      SOTOSPEAK_DEVICE: "cuda"
+      SOTOSPEAK_MODEL: "k2-fsa/OmniVoice"
       # Pin the exact model weights so every host pulls the same version.
-      SOTOSPEAK_MODEL_REVISION: ${SOTOSPEAK_MODEL_REVISION:-c5fdb5ccb189668d56333f77ba2629f4cd7535f4}
+      SOTOSPEAK_MODEL_REVISION: "c5fdb5ccb189668d56333f77ba2629f4cd7535f4"
     volumes:
       - model-cache:/cache   # OmniVoice + UTMOS weights persist across restarts
       - audio-data:/data     # generated audio + uploaded references
     ports:
       - "8000:8000"          # optional: direct API access (frontend also proxies it)
     restart: unless-stopped
-
-    # --- NVIDIA GPU (needs nvidia-container-toolkit) — also set SOTOSPEAK_DEVICE=cuda ---
-    # gpus: all
-    # If your Compose is too old for `gpus:`, use this instead:
-    # deploy:
-    #   resources:
-    #     reservations:
-    #       devices:
-    #         - driver: nvidia
-    #           count: 1
-    #           capabilities: [gpu]
+    # NVIDIA GPU passthrough (needs the NVIDIA Container Toolkit on the host).
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
 
   frontend:
     build: ./frontend

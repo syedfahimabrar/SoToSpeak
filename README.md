@@ -44,10 +44,11 @@ both on Ctrl-C. The sections below cover manual setup and configuration.
 ## Docker Compose
 
 Runs the whole stack (backend + nginx-served frontend) and keeps it up.
-Requires the modern `docker compose` (v2).
+**Requires an NVIDIA GPU** on the host with the modern `docker compose` (v2) and
+the [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html).
 
 ```bash
-cp .env.example .env          # optional: set device / model / revision
+cp .env.example .env          # optional: set model / revision
 docker compose up -d --build  # build and run in the background
 docker compose logs -f        # follow logs (first run downloads model weights)
 ```
@@ -58,26 +59,21 @@ with no CORS setup. Model weights and generated audio persist in named volumes
 (`model-cache`, `audio-data`), so restarts don't re-download. Stop with
 `docker compose down` (volumes are kept).
 
-**GPU (NVIDIA server).** Containers can't use Apple Silicon's MPS, so on a Mac
-the backend runs on CPU (fine for a few samples, slow for big grids). On a Linux
-host with an NVIDIA GPU and the [container toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html):
+Verify the GPU is in use:
+```bash
+docker compose exec backend python -c "import torch; print(torch.cuda.is_available())"  # True
+curl -s localhost:8080/api/health                                                        # "device":"cuda"
+```
 
-1. set `SOTOSPEAK_DEVICE=cuda` in `.env`, and
-2. uncomment the `gpus: all` line under `backend` in `docker-compose.yml`, then
-   `docker compose up -d --build`.
-
-The backend image installs a **CUDA 11.8** Torch by default, which runs on any
-NVIDIA driver ≥ 450 (CUDA 11.x) via minor-version compatibility — so it works on
-older drivers without a host driver update. If your driver is new and you want a
-newer CUDA, build with `--build-arg TORCH_CUDA=cu121` (or `cu124`):
+The backend image installs a **CUDA 11.8** Torch, which runs on any NVIDIA driver
+≥ 450 (CUDA 11.x) via minor-version compatibility — so it works on older drivers
+(e.g. driver 465 / CUDA 11.3) without a host driver update. On a newer driver you
+can build for a newer CUDA with `--build-arg TORCH_CUDA=cu121` (or `cu124`):
 
 ```bash
 docker compose build --build-arg TORCH_CUDA=cu121 backend
 ```
 
-If the container can't see the GPU (missing driver, wrong CUDA, or no
-passthrough) the backend logs a warning and falls back to CPU instead of
-crashing. Check what's actually in use at `GET /api/health` (`device` field).
 An 8 GB GPU is ample for the 0.6B model.
 
 ### Model version
@@ -101,9 +97,8 @@ The backend auto-selects a device; override with `SOTOSPEAK_DEVICE`:
 
 | Machine | Setting | Notes |
 |---|---|---|
-| Apple Silicon (this Mac) | `mps` | Works out of the box. ~10–40 s/sample — keep grids modest and `num_step` low. |
-| NVIDIA GPU server | `cuda` | Much faster (RTF ~0.025). |
-| No GPU | `cpu` | Slow; fine for a couple of samples. |
+| NVIDIA GPU server | `cuda` | The deployment target. Fast (RTF ~0.025). |
+| Apple Silicon (local dev) | `mps` | Works out of the box. ~10–40 s/sample — keep grids modest and `num_step` low. |
 
 ```bash
 SOTOSPEAK_DEVICE=cuda uv run uvicorn app.main:app --host 0.0.0.0 --port 8000
