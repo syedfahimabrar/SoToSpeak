@@ -63,9 +63,21 @@ the backend runs on CPU (fine for a few samples, slow for big grids). On a Linux
 host with an NVIDIA GPU and the [container toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html):
 
 1. set `SOTOSPEAK_DEVICE=cuda` in `.env`, and
-2. uncomment the `gpus: all` line under `backend` in `docker-compose.yml`.
+2. uncomment the `gpus: all` line under `backend` in `docker-compose.yml`, then
+   `docker compose up -d --build`.
 
-The image's Torch wheel already includes CUDA, so no separate build is needed.
+The backend image installs a **CUDA 11.8** Torch by default, which runs on any
+NVIDIA driver ≥ 450 (CUDA 11.x) via minor-version compatibility — so it works on
+older drivers without a host driver update. If your driver is new and you want a
+newer CUDA, build with `--build-arg TORCH_CUDA=cu121` (or `cu124`):
+
+```bash
+docker compose build --build-arg TORCH_CUDA=cu121 backend
+```
+
+If the container can't see the GPU (missing driver, wrong CUDA, or no
+passthrough) the backend logs a warning and falls back to CPU instead of
+crashing. Check what's actually in use at `GET /api/health` (`device` field).
 An 8 GB GPU is ample for the 0.6B model.
 
 ### Model version
