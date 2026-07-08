@@ -36,11 +36,12 @@ RUN uv sync --frozen --no-dev \
         --no-install-package torch --no-install-package torchaudio
 
 # Install torch/torchaudio for the target CUDA last, so nothing overrides it.
-# torch/torchaudio come from the PyTorch CUDA index; their deps from PyPI.
+# Use the PyTorch CUDA index as the ONLY source: adding PyPI here would take
+# priority and pull the latest CUDA-12/13 build instead of the CUDA 11.8 one.
+# Torch's dependencies are already installed by the uv sync steps above.
 ARG TORCH_CUDA=cu118
 RUN uv pip install --python /app/.venv/bin/python \
         --index-url "https://download.pytorch.org/whl/${TORCH_CUDA}" \
-        --extra-index-url https://pypi.org/simple \
         torch torchaudio
 
 EXPOSE 8000
