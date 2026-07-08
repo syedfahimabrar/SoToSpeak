@@ -28,6 +28,10 @@ DEVICE: str = os.environ.get("SOTOSPEAK_DEVICE", _default_device())
 # Hugging Face model id (or a local path) for the OmniVoice checkpoint.
 OMNIVOICE_MODEL: str = os.environ.get("SOTOSPEAK_MODEL", "k2-fsa/OmniVoice")
 
+# Optional exact revision (commit/tag/branch) so a server pulls the same weights.
+# Empty -> latest on the model's default branch.
+OMNIVOICE_REVISION: str | None = os.environ.get("SOTOSPEAK_MODEL_REVISION") or None
+
 # OmniVoice always outputs 24 kHz mono audio.
 SAMPLE_RATE: int = 24000
 

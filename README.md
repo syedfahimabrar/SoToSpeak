@@ -41,6 +41,38 @@ legacy/     the original Tacotron2/HiFi-GAN demo, kept for reference
 `run.sh` launches the backend on `:8000` and the frontend on `:5173` and stops
 both on Ctrl-C. The sections below cover manual setup and configuration.
 
+## Docker Compose
+
+Runs the whole stack (backend + nginx-served frontend) and keeps it up.
+
+```bash
+cp .env.example .env          # optional: set device / model revision
+docker compose up -d --build  # build and run in the background
+docker compose logs -f        # follow logs (first run downloads model weights)
+```
+
+Open **http://localhost:8080** — the frontend serves the UI and reverse-proxies
+`/api` (including the SSE progress stream) to the backend, so it's same-origin
+with no CORS setup. Model weights and generated audio persist in named volumes
+(`model-cache`, `audio-data`), so restarts don't re-download. Stop with
+`docker compose down` (volumes are kept).
+
+**GPU (NVIDIA server).** Containers can't use Apple Silicon's MPS, so on a Mac
+the backend runs on CPU (fine for a few samples, slow for big grids). On a Linux
+host with an NVIDIA GPU and the [container toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html):
+
+1. set `SOTOSPEAK_DEVICE=cuda` in `.env`, and
+2. uncomment the `gpus: all` (or `deploy:`) block under `backend` in `docker-compose.yml`.
+
+The image's Torch wheel already includes CUDA, so no separate build is needed.
+An 8 GB GPU is ample for the 0.6B model.
+
+### Model version
+
+The backend pulls **`k2-fsa/OmniVoice`** (0.6B params) pinned to revision
+`SOTOSPEAK_MODEL_REVISION` so every host runs identical weights. Override the id
+or revision in `.env`.
+
 ## Backend
 
 ```bash

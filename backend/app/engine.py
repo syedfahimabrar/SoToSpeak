@@ -41,7 +41,10 @@ def get_model() -> Any:
             if _model is None:
                 from omnivoice import OmniVoice
 
-                model = OmniVoice.from_pretrained(config.OMNIVOICE_MODEL)
+                kwargs = {}
+                if config.OMNIVOICE_REVISION:
+                    kwargs["revision"] = config.OMNIVOICE_REVISION
+                model = OmniVoice.from_pretrained(config.OMNIVOICE_MODEL, **kwargs)
                 model = model.to(config.DEVICE).eval()
                 _model = model
     return _model
